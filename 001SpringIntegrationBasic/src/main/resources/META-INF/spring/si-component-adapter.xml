@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:int="http://www.springframework.org/schema/integration"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+        
+        
+ 	<int:inbound-channel-adapter ref="producer" method="produceNumber" channel="messageChannel" id="inboundAdapter">
+ 		<int:poller fixed-rate="1000" />
+ 	</int:inbound-channel-adapter>
+ 	
+ 	<int:outbound-channel-adapter ref="consumer" method="consumeNumber" channel="messageChannel" id="outboundAdapter">
+ 	</int:outbound-channel-adapter>
+        
+     <int:channel id="messageChannel"></int:channel>   
+     
+     <bean id="producer" class="com.springintegration.basic.Producer"></bean>
+     <bean id="consumer" class="com.springintegration.basic.Consumer"></bean>   
+</beans>
