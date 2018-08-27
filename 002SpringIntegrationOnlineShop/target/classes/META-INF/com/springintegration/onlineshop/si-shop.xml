@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration
+		http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/stream
+		http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd" > 
+		
+        
+        <!-- Declare the gateway -->
+        <int:gateway service-interface="com.springintegration.onlineshop.service.Shop" id="shop"/>
+        
+        <!-- Declare the input channel in which orders will be places for the further processing -->
+        <int:channel id="ordersChannel"></int:channel>
+        
+        <!-- each order is the collection of orderitems. Splitter will split them for further processing -->
+		<int:splitter input-channel="ordersChannel" output-channel="orderItemsChannel" ref="orderSplitter" />
+		<beans:bean id="orderSplitter" class="com.springintegration.onlineshop.service.OrderSplitter"/>
+		      
+		
+		
+		<int:channel id="orderItemsChannel"></int:channel>
+		
+		<int:router input-channel="orderItemsChannel" ref="orderRouter" method="routeOrder" />
+		<beans:bean id="orderRouter" class="com.springintegration.onlineshop.service.OrderItemRouter"/>
+		
+		
+		
+		<int:channel id="magazineItemChannel">
+			<int:queue capacity="10"/>
+		</int:channel>
+		<int:service-activator  input-channel="magazineItemChannel" ref="shopDiscounter" method="discountMagazine" output-channel="discountedItemsChannel"> </int:service-activator>
+		
+		
+		<int:channel id="dvdItemChannel">
+			<int:queue capacity="10"/>
+		</int:channel>
+		<int:service-activator  input-channel="dvdItemChannel" ref="shopDiscounter" method="discountDvd" output-channel="discountedItemsChannel"> </int:service-activator>
+		
+		
+		<int:channel id="sppItemChannel">
+			<int:queue capacity="10"/>
+		</int:channel>
+		<int:service-activator  input-channel="appItemChannel" ref="shopDiscounter" method="discountApp" output-channel="discountedItemsChannel"> </int:service-activator>
+		
+				
+		<beans:bean id="shopDiscounter" class="com.springintegration.onlineshop.service.ShopDiscounter"/>
+		
+		
+		
+		
+		
+		<!-- moving to the aggregator -->
+		
+		<int:channel id="discountedItemsChannel"></int:channel>
+		<int:aggregator  input-channel="discountedItemsChannel" method="prepareCheckOut" output-channel="deliveryChannel">
+			<beans:bean class="com.springintegration.onlineshop.service.OrderCheckout"/>			
+		</int:aggregator>
+		
+		
+		<int-stream:stdout-channel-adapter  
+		id="deliveryChannel" />
+
+		<int:poller id="poller" default="true" fixed-delay="1000"/>
+		
+		</beans:beans>
